@@ -22,7 +22,7 @@ source /etc/mailinabox.conf # load global vars
 echo "Installing Roundcube (webmail)..."
 apt_install \
 	dbconfig-common \
-	php"${PHP_VER}"-cli php"${PHP_VER}"-sqlite3 php"${PHP_VER}"-intl php"${PHP_VER}"-common php"${PHP_VER}"-curl php"${PHP_VER}"-imap \
+	php"${PHP_VER}"-cli php"${PHP_VER}"-sqlite3 php"${PHP_VER}"-mysql php"${PHP_VER}"-intl php"${PHP_VER}"-common php"${PHP_VER}"-curl php"${PHP_VER}"-imap \
 	php"${PHP_VER}"-gd php"${PHP_VER}"-pspell php"${PHP_VER}"-mbstring php"${PHP_VER}"-xml libjs-jquery libjs-jquery-mousewheel libmagic1 \
 	sqlite3
 
@@ -185,7 +185,7 @@ cp ${RCM_PLUGIN_DIR}/password/config.inc.php.dist \
 
 tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 	"\$config['password_minimum_length']=8;" \
-	"\$config['password_db_dsn']='sqlite:///$STORAGE_ROOT/mail/users.sqlite';" \
+	"\$config['password_db_dsn']='mysql://mailinabox:$(cat /etc/mailinabox-mysql.password)@127.0.0.1/mailinabox';" \
 	"\$config['password_query']='UPDATE users SET password=%P WHERE email=%u';" \
 	"\$config['password_algorithm']='sha512-crypt';" \
 	"\$config['password_algorithm_prefix']='{SHA512-CRYPT}';"
@@ -193,12 +193,13 @@ tools/editconf.py ${RCM_PLUGIN_DIR}/password/config.inc.php \
 # so PHP can use doveadm, for the password changing plugin
 usermod -a -G dovecot www-data
 
-# set permissions so that PHP can use users.sqlite
-# could use dovecot instead of www-data, but not sure it matters
+# The password plugin config now holds the user database password.
+chown root:www-data ${RCM_PLUGIN_DIR}/password/config.inc.php
+chmod 640 ${RCM_PLUGIN_DIR}/password/config.inc.php
+
+# set permissions so that PHP can use roundcube's sqlite database directory
 chown root:www-data "$STORAGE_ROOT/mail"
 chmod 775 "$STORAGE_ROOT/mail"
-chown root:www-data "$STORAGE_ROOT/mail/users.sqlite"
-chmod 664 "$STORAGE_ROOT/mail/users.sqlite"
 
 # Fix Carddav permissions:
 chown -f -R root:www-data ${RCM_PLUGIN_DIR}/carddav

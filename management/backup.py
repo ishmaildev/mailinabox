@@ -293,6 +293,14 @@ def perform_backup(full_backup):
 		print(e)
 		sys.exit(1)
 
+	# The user database lives in MySQL, outside STORAGE_ROOT, so dump it
+	# into STORAGE_ROOT to be included in the backup. setup/mail-users.sh
+	# loads it back into an empty database when restoring. Done before
+	# stopping services so a failed dump can't leave mail down.
+	dump_file = os.path.join(env["STORAGE_ROOT"], "mail", "users.sql")
+	with open(os.open(dump_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w", encoding="utf-8") as f:
+		f.write(shell('check_output', ["/usr/bin/mysqldump", "--single-transaction", "mailinabox"]))
+
 	# Stop services.
 	def service_command(service, command, quit=None):
 		# Execute silently, but if there is an error then display the output & exit.
