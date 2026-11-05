@@ -1,4 +1,4 @@
-﻿Mail-in-a-Box
+Mail-in-a-Box
 =============
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
