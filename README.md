@@ -1,4 +1,4 @@
-Mail-in-a-Box
+﻿Mail-in-a-Box
 =============
 
 By [@JoshData](https://github.com/JoshData) and [contributors](https://github.com/mail-in-a-box/mailinabox/graphs/contributors).
@@ -61,7 +61,7 @@ For experts, start with a completely fresh (really, I mean it) Ubuntu 22.04 LTS 
 
 Clone this fork. The MySQL changes are on the `main` branch (upstream's release tags don't include them):
 
-	$ git clone https://github.com/TexasRRed/mailinabox
+	$ git clone https://github.com/ishmaildev/mailinabox
 	$ cd mailinabox
 
 Begin the installation.
