@@ -7,6 +7,8 @@ Mail-in-a-Box helps individuals take back control of their email by defining a o
 
 **Please see [https://mailinabox.email](https://mailinabox.email) for the project's website and setup guide!**
 
+> **This is a fork.** It stores the mail user database (users, aliases, MFA) in MySQL (MariaDB) instead of SQLite. See [MySQL User Database](#mysql-user-database) below for what that changes. Everything else follows upstream [mail-in-a-box/mailinabox](https://github.com/mail-in-a-box/mailinabox).
+
 * * *
 
 Our goals are to:
@@ -29,6 +31,7 @@ It is a one-click email appliance. There are no user-configurable setup options.
 
 The components installed are:
 
+* A user database in MySQL ([MariaDB](https://mariadb.org/)) shared by Postfix, Dovecot, Roundcube, and the control panel
 * SMTP ([postfix](http://www.postfix.org/)), IMAP ([Dovecot](http://dovecot.org/)), CardDAV/CalDAV ([Nextcloud](https://nextcloud.com/)), and Exchange ActiveSync ([z-push](http://z-push.org/)) servers
 * Webmail ([Roundcube](http://roundcube.net/)), mail filter rules (thanks to Roundcube and Dovecot), and email client autoconfig settings (served by [nginx](http://nginx.org/))
 * Spam filtering ([spamassassin](https://spamassassin.apache.org/)) and greylisting ([postgrey](http://postgrey.schweikert.ch/))
@@ -56,11 +59,10 @@ See the [setup guide](https://mailinabox.email/guide.html) for detailed, user-fr
 
 For experts, start with a completely fresh (really, I mean it) Ubuntu 22.04 LTS 64-bit machine. On the machine...
 
-Clone this repository and checkout the tag corresponding to the most recent release (which you can find in the tags or releases lists on GitHub):
+Clone this fork. The MySQL changes are on the `main` branch (upstream's release tags don't include them):
 
-	$ git clone https://github.com/mail-in-a-box/mailinabox
+	$ git clone https://github.com/TexasRRed/mailinabox
 	$ cd mailinabox
-	$ git checkout TAGNAME
 
 Begin the installation.
 
@@ -74,6 +76,20 @@ Post your question on the [discussion forum](https://discourse.mailinabox.email/
 
 Note that while we want everything to "just work," we can't control the rest of the Internet. Other mail services might block or spam-filter email sent from your Mail-in-a-Box.
 This is a challenge faced by everyone who runs their own mail server, with or without Mail-in-a-Box. See our discussion forum for tips about that.
+
+
+MySQL User Database
+-------------------
+
+In this fork, the database of mail users, aliases, auto-aliases, and MFA settings lives in a local MariaDB server instead of `STORAGE_ROOT/mail/users.sqlite`.
+
+* **Database:** `mailinabox`, using the `utf8mb4_bin` collation so that email addresses still match case-sensitively, as they did in SQLite.
+* **Access:** every service connects over `127.0.0.1` as the MySQL user `mailinabox`. Setup generates its password once and stores it in `/etc/mailinabox-mysql.password`, readable only by root. Running setup again keeps the same password.
+* **Upgrading an existing box:** setup copies `users.sqlite` into MySQL once with `tools/sqlite-to-mysql.py`. It then renames the old file to `users.sqlite.migrated` rather than deleting it. If the copy fails, nothing is written and setup stops with `users.sqlite` left in place.
+* **Backups:** MySQL keeps its data outside `STORAGE_ROOT`, so each backup first dumps the database to `STORAGE_ROOT/mail/users.sql`. When you restore a backup onto a new box, setup loads that dump into the empty database.
+* **Deleting a user** now also deletes their MFA settings. SQLite never enforced that link; MySQL does.
+
+Roundcube's and Nextcloud's own databases are unchanged and still use SQLite.
 
 
 Contributing and Development
